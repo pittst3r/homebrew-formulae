@@ -1,4 +1,4 @@
-# Pittst3r Formulae
+# pittst3r's Formulae
 
 ## How do I install these formulae?
 `brew install pittst3r/formulae/<formula>`
