@@ -1,0 +1,49 @@
+name: brew publish
+
+on:
+  pull_request:
+    types: ['labeled']
+
+jobs:
+  publish:
+    if: contains(github.event.pull_request.labels.*.name, 'publish')
+
+    strategy:
+      matrix:
+        os: [macOS-latest]
+        formula: [kpup]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Cache Homebrew Bundler RubyGems
+        id: cache
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-
+
+      - name: Install Homebrew Bundler RubyGems
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: brew install-bundler-gems
+
+      - name: Build
+        run: brew test-bot --bintray-org=pittst3r --root-url=https://dl.bintray.com/pittst3r/bottles-formulae pittst3r/formulae/${{ matrix.formula }}
+
+      - name: Upload bottles
+        run: brew pr-upload --bintray-org=pittst3r --root-url=https://dl.bintray.com/pittst3r/bottles-formulae --verbose
+        env:
+          HOMEBREW_BINTRAY_USER: pittst3r
+          HOMEBREW_BINTRAY_KEY: ${{ secrets.HOMEBREW_BINTRAY_KEY }}
+
+      - name: Push bottle block commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+          git push origin ${{ github.head_ref }}
