@@ -1,0 +1,7 @@
+#!/bin/sh
+
+FORMULA=$1
+
+brew test-bot --bintray-org=pittst3r --tap=pittst3r/formulae --root-url=https://dl.bintray.com/pittst3r/bottles-formulae pittst3r/formulae/$FORMULA
+brew pr-upload --bintray-org=pittst3r --root-url=https://dl.bintray.com/pittst3r/bottles-formulae
+rm steps_output.txt *.bottle.*
